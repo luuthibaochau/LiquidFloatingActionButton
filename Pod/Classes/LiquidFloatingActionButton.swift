@@ -29,7 +29,7 @@ public enum LiquidFloatingActionButtonAnimateStyle : Int {
 
 @IBDesignable
 public class LiquidFloatingActionButton : UIView {
-
+    private var blackView: UIView? = nil
     private let internalRadiusRatio: CGFloat = 20.0 / 56.0
     public var cellRadiusRatio: CGFloat      = 0.38
     public var animateStyle: LiquidFloatingActionButtonAnimateStyle = .Up {
@@ -43,8 +43,8 @@ public class LiquidFloatingActionButton : UIView {
         }
     }
     
-    public weak var delegate:   LiquidFloatingActionButtonDelegate?
-    public weak var dataSource: LiquidFloatingActionButtonDataSource?
+    public var delegate:   LiquidFloatingActionButtonDelegate?
+    public var dataSource: LiquidFloatingActionButtonDataSource?
 
     public var responsible = true
     public var isOpening: Bool  {
@@ -59,7 +59,6 @@ public class LiquidFloatingActionButton : UIView {
             baseView.color = color
         }
     }
-    
     @IBInspectable public var image: UIImage? {
         didSet {
             if image != nil {
@@ -108,27 +107,42 @@ public class LiquidFloatingActionButton : UIView {
     }
 
     // open all cells
+    func hiddenblackView() -> Void {
+        blackView?.hidden = true
+        self.close()
+    }
     public func open() {
-        
+        if blackView == nil {
+            blackView = UIView.init(frame: (self.superview?.frame)!)
+            blackView?.backgroundColor = UIColor.blackColor()
+            blackView?.alpha = 0.65
+            self.superview?.addSubview(blackView!)
+            self.superview?.bringSubviewToFront(self)
+            // add gesture 
+            let tapGesture = UITapGestureRecognizer.init(target: self, action: #selector(hiddenblackView))
+            tapGesture.numberOfTapsRequired = 2
+            blackView?.addGestureRecognizer(tapGesture)
+        }
+        blackView?.hidden = false
         // rotate plus icon
-        CATransaction.setAnimationDuration(0.8)
+        CATransaction.setAnimationDuration(0.4)
         self.plusLayer.transform = CATransform3DMakeRotation((CGFloat(M_PI) * rotationDegrees) / 180, 0, 0, 1)
 
         let cells = cellArray()
         for cell in cells {
             insertCell(cell)
         }
-
         self.baseView.open(cells)
-        
         self.isClosed = false
     }
 
     // close all cells
     public func close() {
-        
+        if blackView != nil {
+            blackView?.hidden = true
+        }
         // rotate plus icon
-        CATransaction.setAnimationDuration(0.8)
+        CATransaction.setAnimationDuration(0.4)
         self.plusLayer.transform = CATransform3DMakeRotation(0, 0, 0, 1)
     
         self.baseView.close(cellArray())
@@ -268,7 +282,7 @@ class ActionBarBaseView : UIView {
 
 class CircleLiquidBaseView : ActionBarBaseView {
 
-    let openDuration: CGFloat  = 0.6
+    let openDuration: CGFloat  = 0.35
     let closeDuration: CGFloat = 0.2
     let viscosity: CGFloat     = 0.65
     var animateStyle: LiquidFloatingActionButtonAnimateStyle = .Up
@@ -455,6 +469,7 @@ public class LiquidFloatingCell : LiquittableCircle {
 
     // for implement responsible color
     private var originalColor: UIColor
+    
     
     public override var frame: CGRect {
         didSet {
